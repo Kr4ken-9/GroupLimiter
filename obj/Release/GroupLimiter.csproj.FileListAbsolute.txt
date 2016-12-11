@@ -1,0 +1,10 @@
+C:\Users\aglim\Desktop\Plugins\GroupLimit\GroupLimit\bin\Release\GroupLimiter.dll
+C:\Users\aglim\Desktop\Plugins\GroupLimit\GroupLimit\bin\Release\GroupLimiter.pdb
+C:\Users\aglim\Desktop\Plugins\GroupLimit\GroupLimit\obj\Release\GroupLimiter.csprojResolveAssemblyReference.cache
+C:\Users\aglim\Desktop\Plugins\GroupLimit\GroupLimit\obj\Release\GroupLimiter.dll
+C:\Users\aglim\Desktop\Plugins\GroupLimit\GroupLimit\obj\Release\GroupLimiter.pdb
+C:\Users\aglim\Desktop\Plugins\GroupLimiter\GroupLimiter\bin\Release\GroupLimiter.dll
+C:\Users\aglim\Desktop\Plugins\GroupLimiter\GroupLimiter\bin\Release\GroupLimiter.pdb
+C:\Users\aglim\Desktop\Plugins\GroupLimiter\GroupLimiter\obj\Release\GroupLimiter.csprojResolveAssemblyReference.cache
+C:\Users\aglim\Desktop\Plugins\GroupLimiter\GroupLimiter\obj\Release\GroupLimiter.dll
+C:\Users\aglim\Desktop\Plugins\GroupLimiter\GroupLimiter\obj\Release\GroupLimiter.pdb
