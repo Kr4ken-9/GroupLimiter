@@ -8,3 +8,8 @@ C:\Users\aglim\Desktop\Plugins\GroupLimiter\GroupLimiter\bin\Release\GroupLimite
 C:\Users\aglim\Desktop\Plugins\GroupLimiter\GroupLimiter\obj\Release\GroupLimiter.csprojResolveAssemblyReference.cache
 C:\Users\aglim\Desktop\Plugins\GroupLimiter\GroupLimiter\obj\Release\GroupLimiter.dll
 C:\Users\aglim\Desktop\Plugins\GroupLimiter\GroupLimiter\obj\Release\GroupLimiter.pdb
+C:\Users\Kr4ken\Documents\GitHub\GroupLimiter\bin\Release\GroupLimiter.dll
+C:\Users\Kr4ken\Documents\GitHub\GroupLimiter\bin\Release\GroupLimiter.pdb
+C:\Users\Kr4ken\Documents\GitHub\GroupLimiter\obj\Release\GroupLimiter.csprojResolveAssemblyReference.cache
+C:\Users\Kr4ken\Documents\GitHub\GroupLimiter\obj\Release\GroupLimiter.dll
+C:\Users\Kr4ken\Documents\GitHub\GroupLimiter\obj\Release\GroupLimiter.pdb

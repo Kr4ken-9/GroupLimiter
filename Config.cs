@@ -5,8 +5,9 @@ namespace Arechi.GroupLimiter
 {
     public class Config : IRocketPluginConfiguration
     {
-        public int GroupLimit, KickTimer;
+        public int GroupLimit;
         public string Color;
+        public bool ExtraLogging;
 
         [XmlArrayItem("Group")]
         [XmlArray(ElementName = "Whitelist")]
@@ -16,31 +17,11 @@ namespace Arechi.GroupLimiter
         {
             Color = "Green";
             GroupLimit = 5;
-            KickTimer = 10;
+            ExtraLogging = true;
 
             Whitelist = new Whitelist[]{
                 new Whitelist("RocketMod", "103582791439889796")
             };
-        }
-    }
-
-    public sealed class Whitelist
-    {
-        [XmlAttribute("Name")]
-        public string Name;
-
-        [XmlAttribute("SteamID")]
-        public string SteamID;
-
-        public Whitelist(string name, string steamid)
-        {
-            Name = name;
-            SteamID = steamid;
-        }
-        public Whitelist()
-        {
-            Name = "";
-            SteamID = "";
         }
     }
 }

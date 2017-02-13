@@ -2,26 +2,21 @@
 using Rocket.API.Collections;
 using Rocket.Core.Plugins;
 using Rocket.Unturned;
-using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
+using Rocket.Unturned.Permissions;
 using SDG.Unturned;
 using Steamworks;
 using System.Collections.Generic;
-using System.Threading;
-using UnityEngine;
+
+using Logger = Rocket.Core.Logging.Logger;
 
 namespace Arechi.GroupLimiter
 {
     public class GroupLimiter : RocketPlugin<Config>
     {
         public static GroupLimiter Instance;
-        public Dictionary<CSteamID,  Group> group = new Dictionary<CSteamID, Group>();
-
-        public class Group
-        {
-            //public CSteamID PlayerID { get; set; }
-            public int Amount { get; set; }
-        }
+        public Dictionary<CSteamID, Group> group = new Dictionary<CSteamID, Group>();
+        public bool Log;
 
         public override TranslationList DefaultTranslations
         {
@@ -29,11 +24,10 @@ namespace Arechi.GroupLimiter
             {
                 return new TranslationList()
                 {
-                    {"current_amount", "Current group members: {0}/{1}"},
-                    {"bypass", "You exceed the group limit, {0}, but we'll overlook it ;)"},
-                    {"group_whitelisted", "The group {0} is whitelisted, you may pass."},
-                    {"kick_message_player", "Sorry, {0}, you will be kicked in {1} seconds for exceeding group limit."},
-                    {"kick_message_server","{0} had to be kicked because he was one member too much for his group"},
+                    {"bypassed","{0} bypassed the group limit."},
+                    {"whitelisted","{0} bypassed the group limit with a whitelisted group."},
+                    {"rejected", "{0} was rejected join access for exceeding the group limit."},
+                    {"update", "Group: {0} Online Members: {1}."}
                 };
             }
         }
@@ -41,84 +35,75 @@ namespace Arechi.GroupLimiter
         protected override void Load()
         {
             Instance = this;
+            Log = Instance.Configuration.Instance.ExtraLogging;
 
+            UnturnedPermissions.OnJoinRequested += OnJoinRequested;
             U.Events.OnPlayerConnected += OnPlayerConnected;
             U.Events.OnPlayerDisconnected += OnPlayerDisconnected;
 
-            Rocket.Core.Logging.Logger.Log("GroupLimiter has been loaded!");
-            Rocket.Core.Logging.Logger.LogWarning("Current Group Limit: " + Instance.Configuration.Instance.GroupLimit);
+            Logger.Log("GroupLimiter has been loaded!");
+            Logger.Log("Current Group Limit: " + Instance.Configuration.Instance.GroupLimit);
         }
 
         protected override void Unload()
         {
+            UnturnedPermissions.OnJoinRequested -= OnJoinRequested;
             U.Events.OnPlayerConnected -= OnPlayerConnected;
             U.Events.OnPlayerDisconnected -= OnPlayerDisconnected;
 
-            Rocket.Core.Logging.Logger.Log("GroupLimiter has been unloaded!");
+            Logger.Log("GroupLimiter has been unloaded!");
         }
 
-        private void OnPlayerConnected(UnturnedPlayer player)
+        private void OnJoinRequested(CSteamID id, ref ESteamRejection? rejection)
         {
-            if (group.ContainsKey(player.SteamGroupID))
+            UnturnedPlayer Player = UnturnedPlayer.FromCSteamID(id);
+            if (Player.SteamGroupID == null || Player.SteamGroupID == CSteamID.Nil) return;
+            if (group.ContainsKey(Player.SteamGroupID))
             {
-                Group Group = group[player.SteamGroupID];
-                //Group.PlayerID = player.CSteamID;
-                Group.Amount += 1;
-
-                UnturnedChat.Say(player, Instance.Translate("current_amount", Group.Amount, Instance.Configuration.Instance.GroupLimit), UnturnedChat.GetColorFromName(Instance.Configuration.Instance.Color, Color.green));
-
-                if (Group.Amount > Instance.Configuration.Instance.GroupLimit)
+                Group Group = group[Player.SteamGroupID];
+                if (Group.Amount >= Instance.Configuration.Instance.GroupLimit)
                 {
-                    if (player.HasPermission("group.bypass"))
+                    if (Player.HasPermission("group.bypass"))
                     {
-                        UnturnedChat.Say(player, Instance.Translate("bypass", player.DisplayName), UnturnedChat.GetColorFromName(Instance.Configuration.Instance.Color, Color.green));
-                        Rocket.Core.Logging.Logger.LogWarning(player.DisplayName + "exceeded limit but he bypassed it.");
+                        if (Log) Logger.Log(Instance.Translate("bypassed", Player.CharacterName));
                         return;
                     }
 
                     for (int i = 0; i < Configuration.Instance.Whitelist.Length; i++)
                     {
-                        if (Configuration.Instance.Whitelist[i].SteamID == player.SteamGroupID.ToString())
+                        if (Configuration.Instance.Whitelist[i].SteamID == Player.SteamGroupID.ToString())
                         {
-                            UnturnedChat.Say(player, Instance.Translate("group_whitelisted", Configuration.Instance.Whitelist[i].Name, Instance.Configuration.Instance.GroupLimit), UnturnedChat.GetColorFromName(Instance.Configuration.Instance.Color, Color.green));
-                            Rocket.Core.Logging.Logger.Log(player.DisplayName + "exceeded limit but his group is whitelisted.");
+                            if (Log) Logger.Log(Instance.Translate("whitelisted", Player.CharacterName));
                             return;
                         }
                     }
 
-                    UnturnedChat.Say(player, Instance.Translate("kick_message_player", player.DisplayName, Instance.Configuration.Instance.KickTimer), UnturnedChat.GetColorFromName(Instance.Configuration.Instance.Color, Color.green));
-
-                    new Thread(() =>
-                    {
-                        Thread.CurrentThread.IsBackground = true;
-                        Thread.Sleep(Instance.Configuration.Instance.KickTimer * 1000);
-
-                        Provider.kick(player.CSteamID, "Exceeding group limit");
-                        UnturnedChat.Say(Instance.Translate("kick_message_server", player.DisplayName), UnturnedChat.GetColorFromName(Instance.Configuration.Instance.Color, Color.green));
-                        Rocket.Core.Logging.Logger.LogWarning(player.DisplayName + " got kicked for exceeding group limit");
-
-                    }).Start();
+                    rejection = ESteamRejection.SERVER_FULL;
+                    if (Log) Logger.Log(Instance.Translate("rejected", Player.CharacterName));
+                    return;
                 }
             }
-            else
-            {
-                group[player.SteamGroupID] = new Group() { /*PlayerID = player.CSteamID,*/ Amount = 1 };
-                Group Group = group[player.SteamGroupID];
-                UnturnedChat.Say(player, Instance.Translate("current_amount", Group.Amount, Instance.Configuration.Instance.GroupLimit), UnturnedChat.GetColorFromName(Instance.Configuration.Instance.Color, Color.green));
-            }   
+        }
+
+        private void OnPlayerConnected(UnturnedPlayer player)
+        {
+            if (player.SteamGroupID == null || player.SteamGroupID == CSteamID.Nil) return;
+            if (!group.ContainsKey(player.SteamGroupID))
+                group.Add(player.SteamGroupID, new Group() { /*PlayerID = player.CSteamID,*/ Amount = 0 });
+
+            group[player.SteamGroupID].Amount++;
+            if (Log) Logger.Log(Instance.Translate("update", player.SteamGroupID, group[player.SteamGroupID].Amount));
         }
 
         private void OnPlayerDisconnected(UnturnedPlayer player)
         {
+            if (player.SteamGroupID == null || player.SteamGroupID == CSteamID.Nil) return;
             if (group.ContainsKey(player.SteamGroupID))
             {
-                Group Group = group[player.SteamGroupID];
-                Group.Amount -= 1;
+                group[player.SteamGroupID].Amount--;
 
-                if (Group.Amount == 0)
-                {
+                if (group[player.SteamGroupID].Amount == 0)
                     group.Remove(player.SteamGroupID);
-                }
             }
         }
     }
